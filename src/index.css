@@ -1,11 +1,11 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --blue: #1a56db;
-  --blue-dark: #1245b5;
-  --green: #057a55;
-  --green-dark: #046044;
-  --red: #e02424;
+  --blue: #cc1111;
+  --blue-dark: #a80e0e;
+  --green: #16a34a;
+  --green-dark: #15803d;
+  --red: #cc1111;
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -33,7 +33,7 @@ html, body, #root {
 }
 
 .screen-header {
-  background: var(--blue);
+  background: #111111;
   color: #fff;
   padding: 20px 20px 18px;
 }
