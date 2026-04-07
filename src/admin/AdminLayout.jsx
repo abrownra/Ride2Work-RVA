@@ -6,7 +6,9 @@ const NAV = [
   { to: '/admin/trips', label: 'Trips', icon: '🚗' },
   { to: '/admin/riders', label: 'Riders', icon: '👥' },
   { to: '/admin/drivers', label: 'Drivers', icon: '🧑‍✈️' },
+  { to: '/admin/reports', label: 'Reports', icon: '📋' },
   { to: '/admin/invoices', label: 'Invoices', icon: '🧾' },
+  { to: '/admin/incidents', label: 'Incidents', icon: '⚠️' },
   { to: '/admin/settings', label: 'Settings', icon: '⚙️' },
 ]
 
@@ -21,7 +23,7 @@ export default function AdminLayout() {
   return (
     <div className="a-shell">
       <aside className="a-sidebar">
-        <div className="a-sidebar-brand">Ride2Work RVA</div>
+        <div className="a-sidebar-brand">Ride to Work RVA</div>
         <nav className="a-nav">
           {NAV.map((item) => (
             <NavLink
@@ -40,7 +42,7 @@ export default function AdminLayout() {
 
       {/* Mobile top bar */}
       <div className="a-topbar">
-        <span className="a-topbar-brand">Ride2Work Admin</span>
+        <span className="a-topbar-brand">Ride to Work Admin</span>
         <button className="a-signout-sm" onClick={handleSignOut}>Sign Out</button>
       </div>
 
