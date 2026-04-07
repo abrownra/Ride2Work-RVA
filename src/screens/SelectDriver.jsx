@@ -25,7 +25,7 @@ export default function SelectDriver({ onNext }) {
   return (
     <div className="screen">
       <div className="screen-header">
-        <h1>Ride2Work RVA</h1>
+        <h1>Ride to Work RVA</h1>
         <p>Free Rides To Work — Driver App</p>
       </div>
 
@@ -54,7 +54,7 @@ export default function SelectDriver({ onNext }) {
           onClick={() => onNext(selectedDriver)}
           style={{ marginTop: 'auto' }}
         >
-          Start Trip →
+          Start Trips →
         </button>
       </div>
     </div>
