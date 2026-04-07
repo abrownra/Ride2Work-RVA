@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCurrentPosition, reverseGeocode } from '../lib/geocode'
 
@@ -6,18 +6,8 @@ export default function PickUp({ trip, driver, onNext, onBack }) {
   const [arrived, setArrived] = useState(false)
   const [gpsStatus, setGpsStatus] = useState('idle')
   const [pickupAddress, setPickupAddress] = useState('')
-  const [workAddress, setWorkAddress] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
-
-  useEffect(() => {
-    supabase
-      .from('riders')
-      .select('work_address')
-      .eq('id', trip.rider_id)
-      .single()
-      .then(({ data }) => setWorkAddress(data?.work_address || ''))
-  }, [trip.rider_id])
 
   async function handleArrived() {
     setError(null)
@@ -109,24 +99,6 @@ export default function PickUp({ trip, driver, onNext, onBack }) {
         ) : (
           <>
             <div className="gps-status ok">✓ Pickup: {pickupAddress}</div>
-
-            {workAddress ? (
-              <div className="card">
-                <div className="card-row">
-                  <span className="card-label">🏢 Work Address</span>
-                  <span className="card-value" style={{ fontSize: '0.88rem' }}>{workAddress}</span>
-                </div>
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(workAddress)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-primary"
-                  style={{ marginTop: 4, fontSize: '1rem', padding: '14px', textDecoration: 'none' }}
-                >
-                  📍 Navigate to Work
-                </a>
-              </div>
-            ) : null}
 
             <p style={{ fontSize: '1rem', color: 'var(--gray-600)', textAlign: 'center', padding: '8px 0' }}>
               Waiting for rider to get in the vehicle…

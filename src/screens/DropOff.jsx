@@ -3,7 +3,7 @@ import SignatureCanvas from 'react-signature-canvas'
 import { supabase } from '../lib/supabase'
 import { getCurrentPosition, reverseGeocode } from '../lib/geocode'
 
-export default function DropOff({ trip, driver, onNext }) {
+export default function DropOff({ trip, driver, onNext, onBack }) {
   const sigRef = useRef(null)
   const [sigEmpty, setSigEmpty] = useState(true)
   const [odometerEnd, setOdometerEnd] = useState('')
@@ -12,6 +12,7 @@ export default function DropOff({ trip, driver, onNext }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [settings, setSettings] = useState({})
+  const [workAddress, setWorkAddress] = useState('')
 
   useEffect(() => {
     supabase
@@ -23,6 +24,13 @@ export default function DropOff({ trip, driver, onNext }) {
         ;(data || []).forEach((r) => (s[r.key] = parseFloat(r.value)))
         setSettings(s)
       })
+
+    supabase
+      .from('riders')
+      .select('work_address')
+      .eq('id', trip.rider_id)
+      .single()
+      .then(({ data }) => setWorkAddress(data?.work_address || ''))
   }, [])
 
   async function handleDropOff() {
@@ -117,6 +125,25 @@ export default function DropOff({ trip, driver, onNext }) {
       <div className="screen-body">
         {error && <p className="error-msg">{error}</p>}
 
+        {/* Work address navigation */}
+        {workAddress && (
+          <div className="card">
+            <div className="card-row">
+              <span className="card-label">🏢 Work Address</span>
+              <span className="card-value" style={{ fontSize: '0.88rem' }}>{workAddress}</span>
+            </div>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(workAddress)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-primary"
+              style={{ marginTop: 4, fontSize: '1rem', padding: '14px', textDecoration: 'none' }}
+            >
+              📍 Navigate to Work
+            </a>
+          </div>
+        )}
+
         {/* Step 1: GPS */}
         {!gpsData ? (
           <>
@@ -179,6 +206,10 @@ export default function DropOff({ trip, driver, onNext }) {
             </button>
           </div>
         </div>
+
+        <button className="btn btn-outline" onClick={onBack}>
+          ← Back to Trips
+        </button>
 
         <button
           className="btn btn-green"
