@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Ride2Work RVA',
-        short_name: 'Ride2Work',
+        name: 'Ride to Work RVA',
+        short_name: 'Ride to Work',
         description: 'Free Rides To Work — Driver App',
         theme_color: '#1a56db',
         background_color: '#ffffff',
