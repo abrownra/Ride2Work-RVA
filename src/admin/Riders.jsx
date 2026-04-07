@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const EMPTY = { name: '', phone: '', email: '', home_address: '', pickup_time: '', active: true }
+const EMPTY = { name: '', phone: '', email: '', home_address: '', work_address: '', pickup_time: '', active: true }
 
 export default function Riders() {
   const [riders, setRiders] = useState([])
@@ -31,6 +31,7 @@ export default function Riders() {
       phone: r.phone || '',
       email: r.email || '',
       home_address: r.home_address || '',
+      work_address: r.work_address || '',
       pickup_time: r.pickup_time || '',
       active: r.active,
     })
@@ -48,6 +49,7 @@ export default function Riders() {
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       home_address: form.home_address.trim() || null,
+      work_address: form.work_address.trim() || null,
       pickup_time: form.pickup_time || null,
       active: form.active,
     }
@@ -90,6 +92,7 @@ export default function Riders() {
                   <th>Phone</th>
                   <th>Email</th>
                   <th>Home Address</th>
+                  <th>Work Address</th>
                   <th>Pickup Time</th>
                   <th>Status</th>
                   <th></th>
@@ -102,6 +105,7 @@ export default function Riders() {
                     <td>{f(r.phone)}</td>
                     <td>{f(r.email)}</td>
                     <td style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f(r.home_address)}</td>
+                    <td style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f(r.work_address)}</td>
                     <td>{f(r.pickup_time)}</td>
                     <td>
                       <span className={`a-badge ${r.active ? 'a-badge-green' : 'a-badge-gray'}`}>
@@ -150,6 +154,10 @@ export default function Riders() {
               <div className="a-field">
                 <label>Home Address</label>
                 <input value={form.home_address} onChange={(e) => setForm({ ...form, home_address: e.target.value })} />
+              </div>
+              <div className="a-field">
+                <label>Work Address</label>
+                <input value={form.work_address} onChange={(e) => setForm({ ...form, work_address: e.target.value })} />
               </div>
               <div className="a-field">
                 <label>Preferred Pickup Time</label>
