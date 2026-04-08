@@ -13,9 +13,10 @@ const LABELS = {
   invoice_for_address: 'Invoice For — Address',
   invoice_for_city_state_zip: 'Invoice For — City, State, ZIP',
   project_name: 'Project Name',
-  rate_standard: 'Standard Rate ($/ride)',
-  rate_long_distance: 'Long Distance Rate ($/ride)',
+  rate_standard: 'Standard Rate — First Rider ($/ride)',
+  rate_long_distance: 'Long Distance Rate — First Rider ($/ride)',
   long_distance_threshold_miles: 'Long Distance Threshold (miles)',
+  rate_additional_rider: 'Additional Rider Rate ($/rider)',
   admin_email: 'Admin Email (weekly delivery)',
   report_recipient_1: 'Report Recipient 1 (email)',
   report_recipient_2: 'Report Recipient 2 (email)',
@@ -33,7 +34,7 @@ const GROUPS = [
   },
   {
     title: 'Rates',
-    keys: ['rate_standard', 'rate_long_distance', 'long_distance_threshold_miles'],
+    keys: ['rate_standard', 'rate_long_distance', 'long_distance_threshold_miles', 'rate_additional_rider'],
   },
   {
     title: 'General',

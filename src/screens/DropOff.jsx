@@ -17,7 +17,7 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', ['rate_standard', 'rate_long_distance', 'long_distance_threshold_miles'])
+      .in('key', ['rate_standard', 'rate_long_distance', 'long_distance_threshold_miles', 'rate_additional_rider'])
       .then(({ data }) => {
         const s = {}
         ;(data || []).forEach((r) => (s[r.key] = parseFloat(r.value)))
@@ -75,7 +75,8 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
       miles > threshold
         ? (settings.rate_long_distance ?? 21.0)
         : (settings.rate_standard ?? 17.66)
-    const tripTotal = rate * trip.rider_count
+    const additionalRate = settings.rate_additional_rider ?? 0
+    const tripTotal = rate + (additionalRate * (trip.rider_count - 1))
 
     const { data, error: dbErr } = await supabase
       .from('trips')
