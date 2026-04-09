@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const EMPTY = { name: '', phone: '', email: '', payment_method: '', active: true }
+const EMPTY = { name: '', phone: '', email: '', address: '', payment_method: '', active: true }
 
 const PAYMENT_OPTIONS = ['', 'Direct Deposit', 'Check', 'Cash App', 'Zelle', 'Venmo', 'PayPal', 'Other']
 
@@ -28,7 +28,7 @@ export default function Drivers() {
   }
 
   function openEdit(d) {
-    setForm({ name: d.name, phone: d.phone || '', email: d.email || '', payment_method: d.payment_method || '', active: d.active })
+    setForm({ name: d.name, phone: d.phone || '', email: d.email || '', address: d.address || '', payment_method: d.payment_method || '', active: d.active })
     setError(null)
     setModal({ mode: 'edit', id: d.id })
   }
@@ -43,6 +43,7 @@ export default function Drivers() {
         name: form.name.trim(),
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
+        address: form.address.trim() || null,
         payment_method: form.payment_method || null,
         active: form.active,
       })
@@ -52,6 +53,7 @@ export default function Drivers() {
         name: form.name.trim(),
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
+        address: form.address.trim() || null,
         payment_method: form.payment_method || null,
         active: form.active,
       }).eq('id', modal.id)
@@ -143,6 +145,10 @@ export default function Drivers() {
                   <label>Email</label>
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </div>
+              </div>
+              <div className="a-field">
+                <label>Address</label>
+                <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="123 Main St, Richmond, VA" />
               </div>
               <div className="a-field">
                 <label>Preferred Payment Method</label>
