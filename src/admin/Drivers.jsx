@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const EMPTY = { name: '', phone: '', email: '', active: true }
+const EMPTY = { name: '', phone: '', email: '', payment_method: '', active: true }
+
+const PAYMENT_OPTIONS = ['', 'Direct Deposit', 'Check', 'Cash App', 'Zelle', 'Venmo', 'PayPal', 'Other']
 
 export default function Drivers() {
   const [drivers, setDrivers] = useState([])
@@ -26,7 +28,7 @@ export default function Drivers() {
   }
 
   function openEdit(d) {
-    setForm({ name: d.name, phone: d.phone || '', email: d.email || '', active: d.active })
+    setForm({ name: d.name, phone: d.phone || '', email: d.email || '', payment_method: d.payment_method || '', active: d.active })
     setError(null)
     setModal({ mode: 'edit', id: d.id })
   }
@@ -41,6 +43,7 @@ export default function Drivers() {
         name: form.name.trim(),
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
+        payment_method: form.payment_method || null,
         active: form.active,
       })
       if (error) { setError(error.message); setSaving(false); return }
@@ -49,6 +52,7 @@ export default function Drivers() {
         name: form.name.trim(),
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
+        payment_method: form.payment_method || null,
         active: form.active,
       }).eq('id', modal.id)
       if (error) { setError(error.message); setSaving(false); return }
@@ -84,6 +88,7 @@ export default function Drivers() {
                   <th>Name</th>
                   <th>Phone</th>
                   <th>Email</th>
+                  <th>Payment Method</th>
                   <th>Status</th>
                   <th></th>
                 </tr>
@@ -94,6 +99,7 @@ export default function Drivers() {
                     <td style={{ fontWeight: 600 }}>{d.name}</td>
                     <td>{d.phone || '—'}</td>
                     <td>{d.email || '—'}</td>
+                    <td>{d.payment_method || '—'}</td>
                     <td>
                       <span className={`a-badge ${d.active ? 'a-badge-green' : 'a-badge-gray'}`}>
                         {d.active ? 'Active' : 'Inactive'}
@@ -137,6 +143,14 @@ export default function Drivers() {
                   <label>Email</label>
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </div>
+              </div>
+              <div className="a-field">
+                <label>Preferred Payment Method</label>
+                <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })}>
+                  {PAYMENT_OPTIONS.map((o) => (
+                    <option key={o} value={o}>{o || '— Select —'}</option>
+                  ))}
+                </select>
               </div>
               <label className="a-toggle">
                 <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
