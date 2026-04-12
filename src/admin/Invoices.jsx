@@ -27,19 +27,6 @@ export default function Invoices() {
         <h1>Invoices</h1>
       </div>
 
-      <div
-        style={{
-          background: '#fffbeb',
-          border: '1px solid #fde68a',
-          borderRadius: 10,
-          padding: '12px 16px',
-          fontSize: '0.88rem',
-          color: '#92400e',
-          marginBottom: 20,
-        }}
-      >
-        Invoices are auto-generated every Saturday at 6 PM. Manual generation will be available in Phase 3.
-      </div>
 
       <div className="a-card">
         <div className="a-table-wrap">
