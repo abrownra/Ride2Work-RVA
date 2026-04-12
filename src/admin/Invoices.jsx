@@ -9,12 +9,12 @@ function fmtDate(d) {
 function getWeekBounds() {
   const now = new Date()
   const day = now.getDay() // 0=Sun
-  const monday = new Date(now)
-  monday.setDate(now.getDate() - ((day + 6) % 7))
-  const saturday = new Date(monday)
-  saturday.setDate(monday.getDate() + 5)
+  const sunday = new Date(now)
+  sunday.setDate(now.getDate() - day)
+  const saturday = new Date(sunday)
+  saturday.setDate(sunday.getDate() + 6)
   return {
-    start: monday.toISOString().split('T')[0],
+    start: sunday.toISOString().split('T')[0],
     end: saturday.toISOString().split('T')[0],
   }
 }
@@ -72,7 +72,7 @@ export default function Invoices() {
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div className="a-field-row">
             <div className="a-field">
-              <label>Week Start (Monday)</label>
+              <label>Week Start (Sunday)</label>
               <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} />
             </div>
             <div className="a-field">
