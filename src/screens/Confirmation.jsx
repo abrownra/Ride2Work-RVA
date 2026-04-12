@@ -1,7 +1,24 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
+
 export default function Confirmation({ trip, driver, onNewTrip }) {
   const miles = trip.miles_traveled ?? 0
-  const total = trip.trip_total ?? 0
-  const rate = trip.rate_applied ?? 0
+  const [driverPay, setDriverPay] = useState(null)
+
+  useEffect(() => {
+    supabase
+      .from('settings')
+      .select('key, value')
+      .in('key', ['rate_driver_pay', 'rate_driver_additional_rider'])
+      .then(({ data }) => {
+        const s = {}
+        ;(data || []).forEach((r) => (s[r.key] = parseFloat(r.value)))
+        const base = s.rate_driver_pay ?? 14
+        const additional = s.rate_driver_additional_rider ?? 0
+        const riderCount = trip.rider_count ?? 1
+        setDriverPay(base + additional * (riderCount - 1))
+      })
+  }, [])
 
   return (
     <div className="screen">
@@ -41,16 +58,13 @@ export default function Confirmation({ trip, driver, onNewTrip }) {
             <span className="card-value">{trip.rider_count}</span>
           </div>
 
-          <div className="card-row">
-            <span className="card-label">Rate</span>
-            <span className="card-value">${Number(rate).toFixed(2)}</span>
-          </div>
-
           <hr className="card-divider" />
 
           <div className="card-row">
-            <span className="card-label">Trip Total</span>
-            <span className="card-value card-total">${Number(total).toFixed(2)}</span>
+            <span className="card-label">Your Pay</span>
+            <span className="card-value card-total">
+              {driverPay !== null ? `$${driverPay.toFixed(2)}` : '…'}
+            </span>
           </div>
         </div>
 
@@ -66,7 +80,7 @@ export default function Confirmation({ trip, driver, onNewTrip }) {
           onClick={onNewTrip}
           style={{ marginTop: 'auto' }}
         >
-          Start New Trip
+          Back to Trips
         </button>
       </div>
     </div>

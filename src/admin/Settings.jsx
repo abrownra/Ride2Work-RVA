@@ -17,6 +17,8 @@ const LABELS = {
   rate_long_distance: 'Long Distance Rate — First Rider ($/ride)',
   long_distance_threshold_miles: 'Long Distance Threshold (miles)',
   rate_additional_rider: 'Additional Rider Rate ($/rider)',
+  rate_driver_pay: 'Driver Pay — Base ($/ride)',
+  rate_driver_additional_rider: 'Driver Pay — Additional Rider ($/rider)',
   admin_email: 'Admin Email (weekly delivery)',
   report_recipient_1: 'Report Recipient 1 (email)',
   report_recipient_2: 'Report Recipient 2 (email)',
@@ -34,7 +36,7 @@ const GROUPS = [
   },
   {
     title: 'Rates',
-    keys: ['rate_standard', 'rate_long_distance', 'long_distance_threshold_miles', 'rate_additional_rider'],
+    keys: ['rate_standard', 'rate_long_distance', 'long_distance_threshold_miles', 'rate_additional_rider', 'rate_driver_pay', 'rate_driver_additional_rider'],
   },
   {
     title: 'General',
