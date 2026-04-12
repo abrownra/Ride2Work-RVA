@@ -14,11 +14,11 @@ function offsetDate(days) {
 function getWeekBounds() {
   const now = new Date()
   const day = now.getDay()
-  const monday = new Date(now)
-  monday.setDate(now.getDate() - ((day + 6) % 7))
-  const saturday = new Date(monday)
-  saturday.setDate(monday.getDate() + 5)
-  return { start: monday.toISOString().split('T')[0], end: saturday.toISOString().split('T')[0] }
+  const sunday = new Date(now)
+  sunday.setDate(now.getDate() - day)
+  const saturday = new Date(sunday)
+  saturday.setDate(sunday.getDate() + 6)
+  return { start: sunday.toISOString().split('T')[0], end: saturday.toISOString().split('T')[0] }
 }
 
 function getMonthBounds() {
@@ -191,7 +191,7 @@ export default function Reports() {
             <tbody>
               <tr>
                 <td style={{ fontWeight: 600 }}>Weekly</td>
-                <td>Monday – Saturday</td>
+                <td>Sunday – Saturday</td>
                 <td>Paired with invoice sent to City of Richmond</td>
               </tr>
               <tr>
