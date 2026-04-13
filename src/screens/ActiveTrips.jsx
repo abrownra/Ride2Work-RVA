@@ -30,8 +30,6 @@ function TripCard({ trip, onTap }) {
 
   const homeAddress = trip.riders?.home_address
   const workAddress = trip.riders?.work_address
-  const showHomeNav = !hasPickup && homeAddress
-  const showWorkNav = hasPickup && !hasDropoff && workAddress
 
   return (
     <div style={{
@@ -91,62 +89,69 @@ function TripCard({ trip, onTap }) {
         </div>
       </button>
 
-      {/* Navigate to home address — when on the way to pick up */}
-      {showHomeNav && (
-        <a
-          href={navUrl(homeAddress)}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 18px',
-            background: '#eff6ff',
-            borderTop: '1px solid #dbeafe',
-            color: '#1a56db',
-            fontWeight: 600,
-            fontSize: '0.88rem',
-            textDecoration: 'none',
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <span style={{ fontSize: '1.1rem' }}>📍</span>
-          Navigate to {trip.riders?.name?.split(' ')[0]}'s address
-          <span style={{ marginLeft: 'auto', fontSize: '0.8rem', opacity: 0.7, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {homeAddress}
-          </span>
-        </a>
-      )}
-
-      {/* Navigate to work address — when rider is on board */}
-      {showWorkNav && (
-        <a
-          href={navUrl(workAddress)}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 18px',
-            background: '#f0fdf4',
-            borderTop: '1px solid #bbf7d0',
-            color: '#15803d',
-            fontWeight: 600,
-            fontSize: '0.88rem',
-            textDecoration: 'none',
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <span style={{ fontSize: '1.1rem' }}>🏢</span>
-          Navigate to {trip.riders?.name?.split(' ')[0]}'s work
-          <span style={{ marginLeft: 'auto', fontSize: '0.8rem', opacity: 0.7, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {workAddress}
-          </span>
-        </a>
+      {/* Navigation buttons — always show both when addresses available */}
+      {(homeAddress || workAddress) && (
+        <div style={{ borderTop: '1px solid #e5e7eb', display: 'flex' }}>
+          {homeAddress && (
+            <a
+              href={navUrl(homeAddress)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
+                padding: '10px 8px',
+                background: '#eff6ff',
+                borderRight: workAddress ? '1px solid #dbeafe' : 'none',
+                color: '#1a56db',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                textDecoration: 'none',
+                textAlign: 'center',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <span style={{ fontSize: '1.1rem' }}>📍</span>
+              Home
+              <span style={{ fontSize: '0.72rem', opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                {homeAddress}
+              </span>
+            </a>
+          )}
+          {workAddress && (
+            <a
+              href={navUrl(workAddress)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
+                padding: '10px 8px',
+                background: '#f0fdf4',
+                color: '#15803d',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                textDecoration: 'none',
+                textAlign: 'center',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <span style={{ fontSize: '1.1rem' }}>🏢</span>
+              Work
+              <span style={{ fontSize: '0.72rem', opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                {workAddress}
+              </span>
+            </a>
+          )}
+        </div>
       )}
     </div>
   )
