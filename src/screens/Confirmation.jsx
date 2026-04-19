@@ -34,6 +34,13 @@ export default function Confirmation({ trip, driver, onNewTrip }) {
           <p className="section-title">Trip Summary</p>
 
           <div className="card-row">
+            <span className="card-label">Date</span>
+            <span className="card-value">
+              {new Date(trip.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
+
+          <div className="card-row">
             <span className="card-label">Driver</span>
             <span className="card-value">{driver.name}</span>
           </div>

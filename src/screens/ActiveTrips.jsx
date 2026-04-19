@@ -117,9 +117,6 @@ function TripCard({ trip, onTap }) {
             >
               <span style={{ fontSize: '1.1rem' }}>📍</span>
               Home
-              <span style={{ fontSize: '0.72rem', opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
-                {homeAddress}
-              </span>
             </a>
           )}
           {workAddress && (
@@ -146,9 +143,6 @@ function TripCard({ trip, onTap }) {
             >
               <span style={{ fontSize: '1.1rem' }}>🏢</span>
               Work
-              <span style={{ fontSize: '0.72rem', opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
-                {workAddress}
-              </span>
             </a>
           )}
         </div>
@@ -186,7 +180,7 @@ export default function ActiveTrips({ driver, onNewTrip, onContinueTrip, onChang
       </div>
 
       <div className="screen-body">
-        <button className="btn btn-primary" onClick={onNewTrip}>
+        <button className="btn btn-green" onClick={onNewTrip}>
           + Start New Trip
         </button>
 
