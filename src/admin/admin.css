@@ -201,6 +201,11 @@
 .a-btn-ghost { background: transparent; color: #64748b; border: 1px solid #e2e8f0; }
 .a-btn-ghost:hover:not(:disabled) { background: #f8fafc; color: #1e293b; }
 .a-btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+.a-btn-outline { background: #fff; color: #374151; border: 1px solid #e2e8f0; }
+.a-btn-outline:hover:not(:disabled) { background: #f8fafc; }
+.a-btn-danger-sm { padding: 4px 10px; font-size: 0.78rem; background: #fff; color: #ef4444; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; }
+.a-btn-danger-sm:hover:not(:disabled) { background: #fef2f2; }
+.a-btn-danger-sm:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ===== Modal ===== */
 .a-modal-backdrop {

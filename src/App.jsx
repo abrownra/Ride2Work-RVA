@@ -9,6 +9,9 @@ import PickUp from './screens/PickUp'
 import DropOff from './screens/DropOff'
 import Confirmation from './screens/Confirmation'
 
+// Rider PWA
+import RiderApp from './rider/RiderApp'
+
 // Admin
 import Login from './admin/Login'
 import AdminLayout from './admin/AdminLayout'
@@ -20,6 +23,7 @@ import Reports from './admin/Reports'
 import Invoices from './admin/Invoices'
 import Incidents from './admin/Incidents'
 import Settings from './admin/Settings'
+import RidePool from './admin/RidePool'
 
 import './admin/admin.css'
 
@@ -140,7 +144,9 @@ export default function App() {
             <Route path="invoices" element={<Invoices />} />
             <Route path="incidents" element={<Incidents />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="ride-pool" element={<RidePool />} />
           </Route>
+          <Route path="/rider" element={<RiderApp />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

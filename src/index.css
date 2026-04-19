@@ -62,7 +62,13 @@ html, body, #root {
 .field { display: flex; flex-direction: column; gap: 8px; }
 .field label { font-size: 0.85rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; }
 
-select, input[type="number"], input[type="text"] {
+select,
+input[type="text"],
+input[type="number"],
+input[type="tel"],
+input[type="time"],
+input[type="date"],
+input[type="datetime-local"] {
   width: 100%;
   padding: 16px 14px;
   font-size: 1.1rem;

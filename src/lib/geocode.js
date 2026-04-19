@@ -20,6 +20,21 @@ export async function reverseGeocode(lat, lon) {
   }
 }
 
+export async function forwardGeocode(address) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+      { headers: { 'User-Agent': USER_AGENT } }
+    )
+    if (!res.ok) throw new Error('Nominatim error')
+    const data = await res.json()
+    if (!data.length) return null
+    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) }
+  } catch {
+    return null
+  }
+}
+
 export function getCurrentPosition() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
