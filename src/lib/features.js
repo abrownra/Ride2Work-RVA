@@ -11,7 +11,7 @@ export const FEATURES = {
   weather:     false,  // Rainy Day Module   — weather widget + full-screen forecast
   liveBoard:   false,  // Master Key Module  — real-time active trips board (admin)
   leaderboard: false,  // Master Key Module  — driver rankings on trip completion
-  offlineMode: false,  // Master Key Module  — offline trip queuing + auto-sync
+  offlineMode: true,   // Master Key Module  — offline trip queuing + auto-sync
 }
 
 /**
