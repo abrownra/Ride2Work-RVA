@@ -34,6 +34,8 @@ export default function RidePool() {
   const [loading,  setLoading]  = useState(true)
   const [filter,   setFilter]   = useState('pending')
   const [cancelling, setCancelling] = useState(null)
+  const [selected,   setSelected]   = useState(new Set())
+  const [deleting,   setDeleting]   = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -73,6 +75,30 @@ export default function RidePool() {
     load()
   }
 
+  function toggleSelect(id) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    const allSelected = filtered.every((r) => selected.has(r.id))
+    setSelected(allSelected ? new Set() : new Set(filtered.map((r) => r.id)))
+  }
+
+  async function handleDeleteSelected() {
+    if (!selected.size) return
+    setDeleting(true)
+    const ids = [...selected]
+    await supabase.from('trips').delete().in('ride_request_id', ids)
+    await supabase.from('ride_requests').delete().in('id', ids)
+    setSelected(new Set())
+    setDeleting(false)
+    load()
+  }
+
   const filtered = filter === 'all'
     ? requests
     : requests.filter((r) => r.status === filter)
@@ -87,7 +113,18 @@ export default function RidePool() {
     <div className="a-page">
       <div className="a-page-header">
         <h1 className="a-page-title">Ride Pool</h1>
-        <button className="a-btn a-btn-outline" onClick={load}>↻ Refresh</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {selected.size > 0 && (
+            <button
+              className="a-btn a-btn-danger"
+              onClick={handleDeleteSelected}
+              disabled={deleting}
+            >
+              {deleting ? '…' : `Delete Selected (${selected.size})`}
+            </button>
+          )}
+          <button className="a-btn a-btn-outline" onClick={load}>↻ Refresh</button>
+        </div>
       </div>
 
       {/* Summary tiles */}
@@ -110,7 +147,7 @@ export default function RidePool() {
         {FILTERS.map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => { setFilter(f); setSelected(new Set()) }}
             style={{
               padding: '6px 14px',
               borderRadius: 999,
@@ -140,6 +177,13 @@ export default function RidePool() {
           <table className="a-table">
             <thead>
               <tr>
+                <th style={{ width: 36 }}>
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && filtered.every((r) => selected.has(r.id))}
+                    onChange={toggleAll}
+                  />
+                </th>
                 <th>Pickup Time</th>
                 <th>Rider</th>
                 <th>Pickup Address</th>
@@ -158,7 +202,14 @@ export default function RidePool() {
                 const urgent  = r.status === 'pending' && !isPast && (new Date(r.pickup_time) - Date.now()) < 4 * 3_600_000
 
                 return (
-                  <tr key={r.id} style={{ background: urgent ? '#fffbeb' : 'transparent' }}>
+                  <tr key={r.id} style={{ background: selected.has(r.id) ? '#fef2f2' : urgent ? '#fffbeb' : 'transparent' }}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(r.id)}
+                        onChange={() => toggleSelect(r.id)}
+                      />
+                    </td>
                     <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{fmtDateTime(r.pickup_time)}</td>
                     <td>{riders[r.rider_id] || '—'}</td>
                     <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.pickup_address}</td>

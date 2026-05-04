@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../lib/features'
+import Leaderboard from './Leaderboard'
 
 export default function Confirmation({ trip, driver, onNewTrip }) {
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
   const miles = trip.miles_traveled ?? 0
   const [driverPay, setDriverPay] = useState(null)
 
@@ -21,6 +24,8 @@ export default function Confirmation({ trip, driver, onNewTrip }) {
   }, [])
 
   return (
+    <>
+    {FEATURES.leaderboard && showLeaderboard && <Leaderboard driver={driver} onClose={() => setShowLeaderboard(false)} />}
     <div className="screen">
       <div className="screen-header" style={{ background: 'var(--green)' }}>
         <h1>Trip Complete!</h1>
@@ -82,6 +87,15 @@ export default function Confirmation({ trip, driver, onNewTrip }) {
           </div>
         )}
 
+        {FEATURES.leaderboard && (
+          <button
+            className="btn btn-outline"
+            onClick={() => setShowLeaderboard(true)}
+          >
+            View Driver Leaderboard
+          </button>
+        )}
+
         <button
           className="btn btn-primary"
           onClick={onNewTrip}
@@ -91,5 +105,6 @@ export default function Confirmation({ trip, driver, onNewTrip }) {
         </button>
       </div>
     </div>
+    </>
   )
 }

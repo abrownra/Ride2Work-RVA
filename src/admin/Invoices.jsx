@@ -47,8 +47,17 @@ export default function Invoices() {
     setGenResult(null)
     setGenError(null)
     const { data: { session } } = await supabase.auth.getSession()
+    // Convert date strings to local-midnight UTC so timezone doesn't shift trips into wrong day
+    const startDt = new Date(weekStart + 'T00:00:00')
+    const endDt = new Date(weekEnd + 'T00:00:00')
+    endDt.setHours(23, 59, 59, 999)
     const resp = await supabase.functions.invoke('generate-invoice', {
-      body: { week_start: weekStart, week_end: weekEnd },
+      body: {
+        week_start: weekStart,
+        week_end: weekEnd,
+        range_start: startDt.toISOString(),
+        range_end: endDt.toISOString(),
+      },
       headers: { Authorization: `Bearer ${session?.access_token}` },
     })
     setGenerating(false)

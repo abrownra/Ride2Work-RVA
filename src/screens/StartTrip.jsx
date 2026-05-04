@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCurrentPosition, reverseGeocode } from '../lib/geocode'
+import { insertTrip } from '../lib/tripOps'
 
 export default function StartTrip({ driver, onNext, onBack }) {
   const [riders, setRiders] = useState([])
@@ -41,28 +42,25 @@ export default function StartTrip({ driver, onNext, onBack }) {
     const address = await reverseGeocode(position.lat, position.lon)
     setGpsData({ ...position, address })
 
-    const { data, error: dbErr } = await supabase
-      .from('trips')
-      .insert({
-        driver_id: driver.id,
-        rider_id: riderId,
-        rider_count: riderCount,
-        odometer_start: parseInt(odometerStart, 10),
-        start_lat: position.lat,
-        start_lon: position.lon,
-        start_address: address,
-        start_timestamp: new Date().toISOString(),
-        status: 'in_progress',
-      })
-      .select()
-      .single()
+    const tripId  = crypto.randomUUID()
+    const payload = {
+      id:            tripId,
+      driver_id:     driver.id,
+      rider_id:      riderId,
+      rider_count:   riderCount,
+      odometer_start: parseInt(odometerStart, 10),
+      start_lat:     position.lat,
+      start_lon:     position.lon,
+      start_address: address,
+      start_timestamp: new Date().toISOString(),
+      status:        'in_progress',
+    }
+
+    const { data, error: dbErr } = await insertTrip(payload)
 
     setSaving(false)
 
-    if (dbErr) {
-      setError(dbErr.message)
-      return
-    }
+    if (dbErr) { setError(dbErr.message); return }
 
     onNext(data)
   }

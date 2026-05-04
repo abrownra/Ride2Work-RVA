@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCurrentPosition, reverseGeocode } from '../lib/geocode'
+import { updatePickup } from '../lib/tripOps'
 
 export default function PickUp({ trip, driver, onNext, onBack }) {
   const [arrived, setArrived] = useState(false)
@@ -26,23 +27,19 @@ export default function PickUp({ trip, driver, onNext, onBack }) {
     const address = await reverseGeocode(position.lat, position.lon)
     setPickupAddress(address)
 
-    const { error: dbErr } = await supabase
-      .from('trips')
-      .update({
-        pickup_lat: position.lat,
-        pickup_lon: position.lon,
-        pickup_address: address,
-        pickup_timestamp: new Date().toISOString(),
-      })
-      .eq('id', trip.id)
-
-    if (dbErr) {
-      setError(dbErr.message)
-      setGpsStatus('idle')
-      return
+    const updateData = {
+      pickup_lat:       position.lat,
+      pickup_lon:       position.lon,
+      pickup_address:   address,
+      pickup_timestamp: new Date().toISOString(),
     }
 
+    const { error: dbErr, offline } = await updatePickup(trip.id, updateData)
+
+    if (dbErr) { setError(dbErr.message); setGpsStatus('idle'); return }
+
     setArrived(true)
+    if (offline) return  // skip notification when queued offline
 
     // Fire rider notification — non-blocking, don't surface errors to driver
     supabase.functions.invoke('notify-rider', { body: { trip_id: trip.id } })

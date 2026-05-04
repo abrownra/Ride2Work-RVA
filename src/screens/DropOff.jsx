@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import SignatureCanvas from 'react-signature-canvas'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase'  // still needed for settings fetch
 import { getCurrentPosition, reverseGeocode } from '../lib/geocode'
+import { completeTrip } from '../lib/tripOps'
 
 export default function DropOff({ trip, driver, onNext, onBack }) {
   const sigRef = useRef(null)
@@ -48,53 +49,31 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
     setSaving(true)
     setError(null)
 
-    // Upload signature
-    let signatureUrl = null
-    try {
-      const dataUrl = sigRef.current.toDataURL('image/png')
-      const base64 = dataUrl.split(',')[1]
-      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-      const fileName = `trip-${trip.id}-${Date.now()}.png`
-      const { error: uploadErr } = await supabase.storage
-        .from('signatures')
-        .upload(fileName, bytes, { contentType: 'image/png' })
-      if (uploadErr) throw uploadErr
-      const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(fileName)
-      signatureUrl = urlData.publicUrl
-    } catch (e) {
-      setError(`Signature upload failed: ${e.message}`)
-      setSaving(false)
-      return
+    // Calculate rate
+    const odoEnd  = parseInt(odometerEnd, 10)
+    const miles   = odoEnd - trip.odometer_start
+    const threshold    = settings.long_distance_threshold_miles ?? 20
+    const rate         = miles > threshold ? (settings.rate_long_distance ?? 21.0) : (settings.rate_standard ?? 17.66)
+    const additionalRate = settings.rate_additional_rider ?? 0
+    const tripTotal    = rate + (additionalRate * (trip.rider_count - 1))
+
+    const sigDataUrl  = sigRef.current.toDataURL('image/png')
+    const sigBase64   = sigDataUrl.split(',')[1]
+    const sigFileName = `trip-${trip.id}-${Date.now()}.png`
+
+    const updateData = {
+      dropoff_lat:       gpsData.lat,
+      dropoff_lon:       gpsData.lon,
+      dropoff_address:   gpsData.address,
+      dropoff_timestamp: new Date().toISOString(),
+      odometer_end:      odoEnd,
+      miles_traveled:    miles,
+      rate_applied:      rate,
+      trip_total:        tripTotal,
+      status:            'completed',
     }
 
-    // Calculate rate
-    const odoEnd = parseInt(odometerEnd, 10)
-    const miles = odoEnd - trip.odometer_start
-    const threshold = settings.long_distance_threshold_miles ?? 20
-    const rate =
-      miles > threshold
-        ? (settings.rate_long_distance ?? 21.0)
-        : (settings.rate_standard ?? 17.66)
-    const additionalRate = settings.rate_additional_rider ?? 0
-    const tripTotal = rate + (additionalRate * (trip.rider_count - 1))
-
-    const { data, error: dbErr } = await supabase
-      .from('trips')
-      .update({
-        dropoff_lat: gpsData.lat,
-        dropoff_lon: gpsData.lon,
-        dropoff_address: gpsData.address,
-        dropoff_timestamp: new Date().toISOString(),
-        odometer_end: odoEnd,
-        miles_traveled: miles,
-        signature_url: signatureUrl,
-        rate_applied: rate,
-        trip_total: tripTotal,
-        status: 'completed',
-      })
-      .eq('id', trip.id)
-      .select()
-      .single()
+    const { data, error: dbErr } = await completeTrip(trip.id, updateData, sigBase64, sigFileName)
 
     setSaving(false)
 
