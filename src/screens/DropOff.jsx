@@ -8,6 +8,7 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
   const sigRef = useRef(null)
   const [sigEmpty, setSigEmpty] = useState(true)
   const [odometerEnd, setOdometerEnd] = useState('')
+  const [riderCount, setRiderCount] = useState(1)
   const [gpsStatus, setGpsStatus] = useState('idle')
   const [gpsData, setGpsData] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -55,7 +56,7 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
     const threshold    = settings.long_distance_threshold_miles ?? 20
     const rate         = miles > threshold ? (settings.rate_long_distance ?? 21.0) : (settings.rate_standard ?? 17.66)
     const additionalRate = settings.rate_additional_rider ?? 0
-    const tripTotal    = rate + (additionalRate * (trip.rider_count - 1))
+    const tripTotal    = rate + (additionalRate * (riderCount - 1))
 
     const sigDataUrl  = sigRef.current.toDataURL('image/png')
     const sigBase64   = sigDataUrl.split(',')[1]
@@ -68,6 +69,7 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
       dropoff_timestamp: new Date().toISOString(),
       odometer_end:      odoEnd,
       miles_traveled:    miles,
+      rider_count:       riderCount,
       rate_applied:      rate,
       trip_total:        tripTotal,
       status:            'completed',
@@ -135,6 +137,16 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
               {parseInt(odometerEnd) - trip.odometer_start} miles
             </p>
           )}
+        </div>
+
+        {/* Rider Count */}
+        <div className="field">
+          <label>Number of Riders</label>
+          <div className="stepper">
+            <button onClick={() => setRiderCount((c) => Math.max(1, c - 1))}>−</button>
+            <span className="stepper-val">{riderCount}</span>
+            <button onClick={() => setRiderCount((c) => c + 1)}>+</button>
+          </div>
         </div>
 
         {/* Signature */}

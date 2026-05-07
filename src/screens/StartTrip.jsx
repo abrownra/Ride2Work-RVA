@@ -6,7 +6,6 @@ import { insertTrip } from '../lib/tripOps'
 export default function StartTrip({ driver, onNext, onBack }) {
   const [riders, setRiders] = useState([])
   const [riderId, setRiderId] = useState('')
-  const [riderCount, setRiderCount] = useState(1)
   const [odometerStart, setOdometerStart] = useState('')
   const [gpsStatus, setGpsStatus] = useState('idle') // idle | locating | ok | error
   const [gpsData, setGpsData] = useState(null)
@@ -47,7 +46,7 @@ export default function StartTrip({ driver, onNext, onBack }) {
       id:            tripId,
       driver_id:     driver.id,
       rider_id:      riderId,
-      rider_count:   riderCount,
+      rider_count:   1,
       odometer_start: parseInt(odometerStart, 10),
       start_lat:     position.lat,
       start_lon:     position.lon,
@@ -87,15 +86,6 @@ export default function StartTrip({ driver, onNext, onBack }) {
               </option>
             ))}
           </select>
-        </div>
-
-        <div className="field">
-          <label>Number of Riders</label>
-          <div className="stepper">
-            <button onClick={() => setRiderCount((c) => Math.max(1, c - 1))}>−</button>
-            <span className="stepper-val">{riderCount}</span>
-            <button onClick={() => setRiderCount((c) => c + 1)}>+</button>
-          </div>
         </div>
 
         <div className="field">
