@@ -92,7 +92,7 @@ export default function SelectDriver({ onNext }) {
 
         <div className="screen-body">
           {/* Weather widget — tap to expand (Rainy Day Module) */}
-          {FEATURES.weather && weather ? (
+          {FEATURES.weather && (weather ? (
             <button
               onClick={() => setShowWeather(true)}
               style={{
@@ -135,7 +135,7 @@ export default function SelectDriver({ onNext }) {
             }}>
               Loading weather…
             </div>
-          )}
+          ))}
 
           {error && <p className="error-msg">{error}</p>}
 
