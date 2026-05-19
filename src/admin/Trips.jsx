@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../lib/features'
 
 function fmtDate(ts) {
   if (!ts) return '—'
@@ -25,6 +26,7 @@ const EMPTY_FORM = {
   odometer_end: '',
   miles_traveled: '',
   rate_applied: '',
+  rate_differential: '',
   trip_total: '',
 }
 
@@ -98,10 +100,11 @@ export default function Trips() {
   function handleRateOrCountChange(field, value) {
     setForm((prev) => {
       const next = { ...prev, [field]: value }
-      const rate = parseFloat(field === 'rate_applied' ? value : prev.rate_applied)
-      const count = parseInt(field === 'rider_count' ? value : prev.rider_count)
+      const rate  = parseFloat(field === 'rate_applied'      ? value : prev.rate_applied)
+      const diff  = parseFloat(field === 'rate_differential' ? value : prev.rate_differential) || 0
+      const count = parseInt(field === 'rider_count'         ? value : prev.rider_count)
       if (!isNaN(rate) && !isNaN(count) && count > 0) {
-        next.trip_total = (rate * count).toFixed(2)
+        next.trip_total = ((rate + diff) * count).toFixed(2)
       }
       return next
     })
@@ -126,6 +129,7 @@ export default function Trips() {
       odometer_end: t.odometer_end ?? '',
       miles_traveled: t.miles_traveled != null ? Number(t.miles_traveled).toFixed(1) : '',
       rate_applied: t.rate_applied != null ? Number(t.rate_applied).toFixed(2) : '',
+      rate_differential: t.rate_differential != null && Number(t.rate_differential) > 0 ? Number(t.rate_differential).toFixed(2) : '',
       trip_total: t.trip_total != null ? Number(t.trip_total).toFixed(2) : '',
     })
     setFormError(null)
@@ -149,6 +153,7 @@ export default function Trips() {
       odometer_end: form.odometer_end !== '' ? parseInt(form.odometer_end) : null,
       miles_traveled: form.miles_traveled !== '' ? parseFloat(form.miles_traveled) : null,
       rate_applied: form.rate_applied !== '' ? parseFloat(form.rate_applied) : null,
+      rate_differential: form.rate_differential !== '' ? parseFloat(form.rate_differential) : 0,
       trip_total: form.trip_total !== '' ? parseFloat(form.trip_total) : null,
     }
     if (form.created_at) payload.created_at = new Date(form.created_at).toISOString()
@@ -239,6 +244,7 @@ export default function Trips() {
                   <th>Miles</th>
                   <th>Riders</th>
                   <th>Rate</th>
+                  {FEATURES.differential && <th>Diff</th>}
                   <th>Total</th>
                   <th>Status</th>
                   <th>Sig</th>
@@ -261,6 +267,11 @@ export default function Trips() {
                     <td>{t.miles_traveled != null ? Number(t.miles_traveled).toFixed(1) : '—'}</td>
                     <td>{t.rider_count}</td>
                     <td>{t.rate_applied != null ? `$${Number(t.rate_applied).toFixed(2)}` : '—'}</td>
+                    {FEATURES.differential && (
+                      <td style={{ color: Number(t.rate_differential) > 0 ? '#15803d' : '#94a3b8' }}>
+                        {Number(t.rate_differential) > 0 ? `+$${Number(t.rate_differential).toFixed(2)}` : '—'}
+                      </td>
+                    )}
                     <td style={{ fontWeight: 700 }}>
                       {t.trip_total != null ? `$${Number(t.trip_total).toFixed(2)}` : '—'}
                     </td>
@@ -424,6 +435,20 @@ export default function Trips() {
                   />
                 </div>
               </div>
+
+              {FEATURES.differential && (
+                <div className="a-field">
+                  <label>Differential Surcharge ($ per rider)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.rate_differential}
+                    onChange={(e) => handleRateOrCountChange('rate_differential', e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+              )}
 
               <div className="a-field">
                 <label>Trip Total ($)</label>

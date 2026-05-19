@@ -73,6 +73,7 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
       rate_applied:      rate,
       trip_total:        tripTotal,
       status:            'completed',
+      start_timestamp:   trip.start_timestamp,  // needed for differential time window check
     }
 
     const { data, error: dbErr } = await completeTrip(trip.id, updateData, sigBase64, sigFileName)

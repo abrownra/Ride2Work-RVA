@@ -71,22 +71,44 @@ export default function Reports() {
     setGenerating(true)
     setError(null)
     setResult(null)
-
-    const { data, error: fnErr } = await supabase.functions.invoke('generate-invoice', {
-      body: {
-        date_start:   dateStart,
-        date_end:     dateEnd,
-        report_only:  true,
-        report_title: reportTitle,
-      },
-    })
-
-    setGenerating(false)
-
-    if (fnErr)      { setError(fnErr.message || 'Generation failed'); return }
-    if (data?.error){ setError(data.error);                           return }
-
-    setResult(data)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-invoice`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            date_start:   dateStart,
+            date_end:     dateEnd,
+            report_only:  true,
+            report_title: reportTitle,
+          }),
+        }
+      )
+      const data = await res.json()
+      if (!res.ok || data.error) { setError(data.error || 'Generation failed'); return }
+      // Download PDF directly from the stored URL
+      const pdfRes = await fetch(data.report_url)
+      const blob = await pdfRes.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${reportTitle.replace(/\s+/g, '-').toLowerCase()}-${dateStart}-${dateEnd}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      setResult({ downloaded: true })
+    } catch (e) {
+      setError(e.message || 'Generation failed')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   return (
@@ -159,18 +181,10 @@ export default function Reports() {
               border: '1px solid #86efac',
               borderRadius: 8,
               padding: '14px 18px',
+              fontWeight: 600,
+              color: '#15803d',
             }}>
-              <p style={{ fontWeight: 600, color: '#15803d', marginBottom: 10 }}>
-                Report generated — {result.total_rides} trips · ${Number(result.total_amount).toFixed(2)}
-              </p>
-              <a
-                href={result.report_url}
-                target="_blank"
-                rel="noreferrer"
-                className="a-btn a-btn-primary"
-              >
-                Download PDF
-              </a>
+              Report downloaded!
             </div>
           )}
         </div>

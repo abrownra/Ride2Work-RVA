@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { FEATURES } from '../lib/features'
 
 const LABELS = {
   company_name: 'Company Name',
@@ -85,6 +86,78 @@ export default function Settings() {
   const [deleteError,    setDeleteError]    = useState(null)
   const [currentUserId,  setCurrentUserId]  = useState(null)
 
+  // Differential pricing rules
+  const [diffRules,      setDiffRules]      = useState([])
+  const [diffLoading,    setDiffLoading]    = useState(false)
+  const [diffForm,       setDiffForm]       = useState(null)   // null = closed, {} = new, {id,...} = editing
+  const [diffSaving,     setDiffSaving]     = useState(false)
+  const [diffError,      setDiffError]      = useState(null)
+  const [deletingRuleId, setDeletingRuleId] = useState(null)
+
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+
+  function emptyRule() {
+    return { name: '', time_start: '', time_end: '', days: [], surcharge: '', active: true }
+  }
+
+  async function fetchDiffRules() {
+    setDiffLoading(true)
+    const { data } = await supabase.from('differential_rules').select('*').order('created_at')
+    setDiffRules(data || [])
+    setDiffLoading(false)
+  }
+
+  async function handleSaveDiffRule() {
+    setDiffError(null)
+    const hasTime = diffForm.time_start || diffForm.time_end
+    const hasDays = diffForm.days.length > 0
+    if (hasTime && (!diffForm.time_start || !diffForm.time_end)) {
+      setDiffError('Both Time Start and Time End are required when setting a time window.')
+      return
+    }
+    if (!hasTime && !hasDays) {
+      setDiffError('At least one condition is required — set a time window, days of week, or both.')
+      return
+    }
+    setDiffSaving(true)
+    const payload = {
+      name:       diffForm.name.trim(),
+      time_start: diffForm.time_start || null,
+      time_end:   diffForm.time_end   || null,
+      days:       diffForm.days.length ? diffForm.days : null,
+      surcharge:  parseFloat(diffForm.surcharge) || 0,
+      active:     diffForm.active,
+    }
+    let err
+    if (diffForm.id) {
+      ;({ error: err } = await supabase.from('differential_rules').update(payload).eq('id', diffForm.id))
+    } else {
+      ;({ error: err } = await supabase.from('differential_rules').insert(payload))
+    }
+    if (err) {
+      setDiffError(err.message)
+    } else {
+      setDiffForm(null)
+      fetchDiffRules()
+    }
+    setDiffSaving(false)
+  }
+
+  async function handleDeleteDiffRule(id) {
+    if (!confirm('Delete this rule?')) return
+    setDeletingRuleId(id)
+    await supabase.from('differential_rules').delete().eq('id', id)
+    setDiffRules((prev) => prev.filter((r) => r.id !== id))
+    setDeletingRuleId(null)
+  }
+
+  function toggleDay(dayIdx) {
+    setDiffForm((prev) => {
+      const days = prev.days.includes(dayIdx) ? prev.days.filter((d) => d !== dayIdx) : [...prev.days, dayIdx]
+      return { ...prev, days }
+    })
+  }
+
   useEffect(() => {
     Promise.all([
       supabase.from('settings').select('key, value'),
@@ -106,6 +179,7 @@ export default function Settings() {
 
       setLoading(false)
     })
+    if (FEATURES.differential) fetchDiffRules()
   }, [])
 
   async function fetchAdminUsers() {
@@ -339,6 +413,169 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      {/* Differential Pricing Rules */}
+      {FEATURES.differential && (
+        <div className="a-card" style={{ marginBottom: 20 }}>
+          <div className="a-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Differential Pricing Rules</span>
+            {!diffForm && (
+              <button className="a-btn a-btn-primary a-btn-sm" onClick={() => setDiffForm(emptyRule())}>
+                + Add Rule
+              </button>
+            )}
+          </div>
+
+          {/* Add / Edit form */}
+          {diffForm && (
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#334155' }}>
+                {diffForm.id ? 'Edit Rule' : 'New Rule'}
+              </div>
+              {diffError && <p className="a-error">{diffError}</p>}
+              <div className="a-field">
+                <label>Rule Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Evening / Night"
+                  value={diffForm.name}
+                  onChange={(e) => setDiffForm({ ...diffForm, name: e.target.value })}
+                />
+              </div>
+              <div className="a-field-row">
+                <div className="a-field">
+                  <label>Time Start (24h, optional)</label>
+                  <input
+                    type="time"
+                    value={diffForm.time_start}
+                    onChange={(e) => setDiffForm({ ...diffForm, time_start: e.target.value })}
+                  />
+                </div>
+                <div className="a-field">
+                  <label>Time End (24h, optional)</label>
+                  <input
+                    type="time"
+                    value={diffForm.time_end}
+                    onChange={(e) => setDiffForm({ ...diffForm, time_end: e.target.value })}
+                  />
+                </div>
+                <div className="a-field">
+                  <label>Surcharge ($ per rider)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="2.00"
+                    value={diffForm.surcharge}
+                    onChange={(e) => setDiffForm({ ...diffForm, surcharge: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="a-field">
+                <label>Days of Week (optional — leave blank for any day)</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+                  {DAYS.map((d, i) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => toggleDay(i)}
+                      style={{
+                        padding: '4px 12px', borderRadius: 6, fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                        border: '1.5px solid',
+                        borderColor: diffForm.days.includes(i) ? '#1d4ed8' : '#cbd5e1',
+                        background: diffForm.days.includes(i) ? '#dbeafe' : '#fff',
+                        color: diffForm.days.includes(i) ? '#1d4ed8' : '#64748b',
+                      }}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="a-field" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="checkbox"
+                  id="diff-active"
+                  checked={diffForm.active}
+                  onChange={(e) => setDiffForm({ ...diffForm, active: e.target.checked })}
+                  style={{ width: 16, height: 16 }}
+                />
+                <label htmlFor="diff-active" style={{ margin: 0, fontWeight: 500 }}>Active</label>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  className="a-btn a-btn-primary"
+                  onClick={handleSaveDiffRule}
+                  disabled={diffSaving || !diffForm.name.trim() || !diffForm.surcharge}
+                >
+                  {diffSaving ? 'Saving…' : 'Save Rule'}
+                </button>
+                <button className="a-btn a-btn-ghost" onClick={() => { setDiffForm(null); setDiffError(null) }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Rule list */}
+          <div style={{ padding: '12px 20px' }}>
+            {diffLoading ? (
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Loading…</p>
+            ) : diffRules.length === 0 ? (
+              <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No rules yet. Add one above.</p>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', color: '#64748b', fontWeight: 600 }}>Name</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', color: '#64748b', fontWeight: 600 }}>Time Window</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', color: '#64748b', fontWeight: 600 }}>Days</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', color: '#64748b', fontWeight: 600 }}>Surcharge</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', color: '#64748b', fontWeight: 600 }}>Status</th>
+                    <th style={{ width: 100 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {diffRules.map((rule) => (
+                    <tr key={rule.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '9px 8px', fontWeight: 600 }}>{rule.name}</td>
+                      <td style={{ padding: '9px 8px', color: '#475569' }}>
+                        {rule.time_start && rule.time_end ? `${rule.time_start} – ${rule.time_end}` : '—'}
+                      </td>
+                      <td style={{ padding: '9px 8px', color: '#475569' }}>
+                        {rule.days?.length ? rule.days.map((d) => DAYS[d]).join(', ') : '—'}
+                      </td>
+                      <td style={{ padding: '9px 8px', fontWeight: 700, color: '#15803d' }}>
+                        +${Number(rule.surcharge).toFixed(2)}/rider
+                      </td>
+                      <td style={{ padding: '9px 8px' }}>
+                        {rule.active
+                          ? <span className="a-badge a-badge-green">Active</span>
+                          : <span className="a-badge a-badge-gray">Inactive</span>}
+                      </td>
+                      <td style={{ padding: '9px 8px', display: 'flex', gap: 6 }}>
+                        <button
+                          className="a-btn a-btn-ghost a-btn-sm"
+                          onClick={() => setDiffForm({ ...rule, days: rule.days || [] })}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="a-btn a-btn-danger a-btn-sm"
+                          onClick={() => handleDeleteDiffRule(rule.id)}
+                          disabled={deletingRuleId === rule.id}
+                        >
+                          {deletingRuleId === rule.id ? '…' : 'Del'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Existing Admin Users */}
       <div className="a-card" style={{ marginBottom: 20 }}>

@@ -46,26 +46,47 @@ export default function Invoices() {
     setGenerating(true)
     setGenResult(null)
     setGenError(null)
-    const { data: { session } } = await supabase.auth.getSession()
-    // Convert date strings to local-midnight UTC so timezone doesn't shift trips into wrong day
-    const startDt = new Date(weekStart + 'T00:00:00')
-    const endDt = new Date(weekEnd + 'T00:00:00')
-    endDt.setHours(23, 59, 59, 999)
-    const resp = await supabase.functions.invoke('generate-invoice', {
-      body: {
-        week_start: weekStart,
-        week_end: weekEnd,
-        range_start: startDt.toISOString(),
-        range_end: endDt.toISOString(),
-      },
-      headers: { Authorization: `Bearer ${session?.access_token}` },
-    })
-    setGenerating(false)
-    if (resp.error || resp.data?.error) {
-      setGenError(resp.data?.error || resp.error?.message || 'Generation failed')
-    } else {
-      setGenResult('Invoice generated and sent successfully!')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const startDt = new Date(weekStart + 'T00:00:00')
+      const endDt = new Date(weekEnd + 'T00:00:00')
+      endDt.setHours(23, 59, 59, 999)
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-invoice`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            week_start: weekStart,
+            week_end: weekEnd,
+            range_start: startDt.toISOString(),
+            range_end: endDt.toISOString(),
+          }),
+        }
+      )
+      const data = await res.json()
+      if (!res.ok || data.error) { setGenError(data.error || 'Generation failed'); return }
+      // Download the PDF directly from the stored URL
+      const pdfRes = await fetch(data.invoice_url)
+      const blob = await pdfRes.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `invoice-${weekStart}-${weekEnd}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      setGenResult('Invoice downloaded!')
       load()
+    } catch (e) {
+      setGenError(e.message || 'Generation failed')
+    } finally {
+      setGenerating(false)
     }
   }
 
@@ -92,7 +113,7 @@ export default function Invoices() {
           {genError && <p className="a-error">{genError}</p>}
           {genResult && (
             <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px 14px', color: '#15803d', fontWeight: 600, fontSize: '0.9rem' }}>
-              ✓ {genResult}
+              {genResult}
             </div>
           )}
           <button
