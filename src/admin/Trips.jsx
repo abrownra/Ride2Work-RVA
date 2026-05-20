@@ -153,7 +153,7 @@ export default function Trips() {
       odometer_end: form.odometer_end !== '' ? parseInt(form.odometer_end) : null,
       miles_traveled: form.miles_traveled !== '' ? parseFloat(form.miles_traveled) : null,
       rate_applied: form.rate_applied !== '' ? parseFloat(form.rate_applied) : null,
-      rate_differential: form.rate_differential !== '' ? parseFloat(form.rate_differential) : 0,
+      ...(FEATURES.differential && { rate_differential: form.rate_differential !== '' ? parseFloat(form.rate_differential) : 0 }),
       trip_total: form.trip_total !== '' ? parseFloat(form.trip_total) : null,
     }
     if (form.created_at) payload.created_at = new Date(form.created_at).toISOString()
