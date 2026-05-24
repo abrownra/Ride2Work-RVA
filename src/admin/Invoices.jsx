@@ -145,7 +145,8 @@ export default function Invoices() {
                   <th>Riders</th>
                   <th>Total</th>
                   <th>Sent</th>
-                  <th>PDF</th>
+                  <th>Invoice</th>
+                  <th>Report</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,7 +169,14 @@ export default function Invoices() {
                     <td>
                       {inv.pdf_url ? (
                         <a href={inv.pdf_url} target="_blank" rel="noreferrer" className="a-btn a-btn-ghost a-btn-sm">
-                          Download
+                          Invoice
+                        </a>
+                      ) : '—'}
+                    </td>
+                    <td>
+                      {inv.report_url ? (
+                        <a href={inv.report_url} target="_blank" rel="noreferrer" className="a-btn a-btn-ghost a-btn-sm">
+                          Report
                         </a>
                       ) : '—'}
                     </td>

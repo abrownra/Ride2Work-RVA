@@ -65,8 +65,8 @@ function drawTripHeader(page:any,y:number,font:any,bold:any):number{
   return y-HDR_H
 }
 
-async function drawTripRow(doc:any,page:any,y:number,trip:any,idx:number,font:any,bold:any,sigCache:Record<string,Uint8Array|null>):Promise<{page:any;y:number}>{
-  const hasSig=!!(trip.signature_url&&sigCache[trip.signature_url])
+async function drawTripRow(doc:any,page:any,y:number,trip:any,idx:number,font:any,bold:any):Promise<{page:any;y:number}>{
+  const hasSig=!!trip.signature_url
   const rowH=hasSig?SIG_H:TEXT_H
   if(y-rowH<M+20){page=doc.addPage([W,H]);y=H-M;y=drawTripHeader(page,y,font,bold)}
   if(idx%2===1)page.drawRectangle({x:M,y:y-rowH,width:CW,height:rowH,color:ALTROW})
@@ -77,9 +77,15 @@ async function drawTripRow(doc:any,page:any,y:number,trip:any,idx:number,font:an
   for(let i=0;i<TCOLS.length;i++){
     const c=TCOLS[i]
     if(c.key==="signature"){
-      if(hasSig){try{const img=await doc.embedPng(sigCache[trip.signature_url]!);const sw=c.w-4,sh=rowH-6;page.drawRectangle({x:x+2,y:y-rowH+3,width:sw,height:sh,color:WHITE});page.drawImage(img,{x:x+2,y:y-rowH+3,width:sw,height:sh})}catch{page.drawText("[err]",{x:x+2,y:textY,size:FS,font,color:RED})}}
-      else if(!trip.signature_url)page.drawText("! MISSING",{x:x+2,y:textY,size:FS,font:bold,color:RED})
-      else page.drawText("-",{x:x+2,y:textY,size:FS,font,color:DGRAY})
+      if(hasSig){
+        try{
+          const r=await fetch(trip.signature_url)
+          const sigBytes=r.ok?new Uint8Array(await r.arrayBuffer()):null
+          if(sigBytes){const img=await doc.embedPng(sigBytes);const sw=c.w-4,sh=rowH-6;page.drawRectangle({x:x+2,y:y-rowH+3,width:sw,height:sh,color:WHITE});page.drawImage(img,{x:x+2,y:y-rowH+3,width:sw,height:sh})}
+          else page.drawText("-",{x:x+2,y:textY,size:FS,font,color:DGRAY})
+        }catch{page.drawText("[err]",{x:x+2,y:textY,size:FS,font,color:RED})}
+      }
+      else page.drawText("! MISSING",{x:x+2,y:textY,size:FS,font:bold,color:RED})
     }else{
       page.drawText(trunc(font,vals[i],c.w-4,FS),{x:x+2,y:textY,size:FS,font,color:DGRAY})
     }
@@ -89,7 +95,7 @@ async function drawTripRow(doc:any,page:any,y:number,trip:any,idx:number,font:an
   return{page,y:y-rowH}
 }
 
-async function buildReport(trips:any[],settings:Record<string,string>,sigCache:Record<string,Uint8Array|null>,dateStart:string,dateEnd:string,title:string):Promise<PDFDocument>{
+async function buildReport(trips:any[],settings:Record<string,string>,dateStart:string,dateEnd:string,title:string):Promise<PDFDocument>{
   const doc=await PDFDocument.create()
   const font=await doc.embedFont(StandardFonts.Helvetica)
   const bold=await doc.embedFont(StandardFonts.HelveticaBold)
@@ -120,7 +126,7 @@ async function buildReport(trips:any[],settings:Record<string,string>,sigCache:R
   hline(page,M,y-TEXT_H,DTW,0.75);y-=TEXT_H+22
   page.drawText("TRIP DETAIL",{x:M,y,size:9,font:bold,color:SUBGRAY});y-=4
   y=drawTripHeader(page,y,font,bold)
-  for(let i=0;i<trips.length;i++){const r=await drawTripRow(doc,page,y,trips[i],i,font,bold,sigCache);page=r.page;y=r.y}
+  for(let i=0;i<trips.length;i++){const r=await drawTripRow(doc,page,y,trips[i],i,font,bold);page=r.page;y=r.y}
   if(y-TEXT_H<M){page=doc.addPage([W,H]);y=H-M}
   page.drawRectangle({x:M,y:y-TEXT_H,width:CW,height:TEXT_H,color:TOTBG})
   page.drawText(`TOTAL  ${totalRides} trips  ${totalRiders} riders  ${fmtC(totalAmt)}`,{x:M+4,y:y-TEXT_H+5,size:FS,font:bold,color:WHITE})
@@ -128,7 +134,7 @@ async function buildReport(trips:any[],settings:Record<string,string>,sigCache:R
   return doc
 }
 
-async function buildInvoice(trips:any[],settings:Record<string,string>,sigCache:Record<string,Uint8Array|null>,weekStart:string,weekEnd:string,invoiceNumber:number):Promise<PDFDocument>{
+async function buildInvoice(trips:any[],settings:Record<string,string>,weekStart:string,weekEnd:string,invoiceNumber:number):Promise<PDFDocument>{
   const doc=await PDFDocument.create()
   const font=await doc.embedFont(StandardFonts.Helvetica)
   const bold=await doc.embedFont(StandardFonts.HelveticaBold)
@@ -157,7 +163,7 @@ async function buildInvoice(trips:any[],settings:Record<string,string>,sigCache:
   let rowIdx=0
   for(const[riderName,rTrips]of sortedGroups){
     const gh=drawRiderGroupHeader(doc,page,y,riderName,font,bold,addPage);page=gh.page;y=gh.y
-    for(const trip of rTrips){const r=await drawTripRow(doc,page,y,trip,rowIdx,font,bold,sigCache);page=r.page;y=r.y;rowIdx++}
+    for(const trip of rTrips){const r=await drawTripRow(doc,page,y,trip,rowIdx,font,bold);page=r.page;y=r.y;rowIdx++}
   }
   const TH=28
   if(y-TH<M){page=doc.addPage([W,H]);y=H-M}
@@ -185,19 +191,13 @@ Deno.serve(async(req:Request)=>{
     const{data:trips,error:tripsErr}=await supabase.from("trips").select("*, drivers(name), riders(name), rate_differential").eq("status","completed").gte("created_at",queryStart).lte("created_at",queryEnd).order("trip_number")
     if(tripsErr)throw tripsErr
     if(!trips?.length)return new Response(JSON.stringify({error:"No completed trips found for this period"}),{status:400,headers:{...cors,"Content-Type":"application/json"}})
-    const sigCache:Record<string,Uint8Array|null>={}
-    const uniqueSigUrls=[...new Set<string>(trips.map((t:any)=>t.signature_url).filter((u:any):u is string=>!!u))]
-    await Promise.all(uniqueSigUrls.map(async(url)=>{
-      try{const r=await fetch(url);sigCache[url]=r.ok?new Uint8Array(await r.arrayBuffer()):null}
-      catch{sigCache[url]=null}
-    }))
     const ts=Date.now()
     const totalAmt=trips.reduce((s:number,t:any)=>s+(t.trip_total||0),0)
     const totalRiders=trips.reduce((s:number,t:any)=>s+(t.rider_count||1),0)
 
     if(report_only){
       const title=report_title||"Driver Report"
-      const reportDoc=await buildReport(trips,settings,sigCache,rangeStart,rangeEnd,title)
+      const reportDoc=await buildReport(trips,settings,rangeStart,rangeEnd,title)
       const rBytes=await reportDoc.save()
       const rPath=`reports/report-${rangeStart}-${rangeEnd}-${ts}.pdf`
       const{error:upErr}=await supabase.storage.from("pdfs").upload(rPath,rBytes,{contentType:"application/pdf"})
@@ -206,23 +206,34 @@ Deno.serve(async(req:Request)=>{
       return new Response(JSON.stringify({report_url:rUrl.publicUrl,total_rides:trips.length,total_amount:totalAmt}),{headers:{...cors,"Content-Type":"application/json"}})
     }
 
-    const{data:invoice,error:invErr}=await supabase.from("invoices").insert({week_start:rangeStart,week_end:rangeEnd,total_rides:trips.length,total_riders:totalRiders,total_amount:totalAmt}).select().single()
-    if(invErr)throw invErr
-    const invoiceDoc=await buildInvoice(trips,settings,sigCache,rangeStart,rangeEnd,invoice.invoice_number)
+    // Upsert: update existing invoice for this period rather than creating a duplicate
+    const{data:existing}=await supabase.from("invoices").select("id,invoice_number").eq("week_start",rangeStart).eq("week_end",rangeEnd).maybeSingle()
+    let invoice:any
+    if(existing){
+      const{data:upd,error:updExErr}=await supabase.from("invoices").update({total_rides:trips.length,total_riders:totalRiders,total_amount:totalAmt}).eq("id",existing.id).select().single()
+      if(updExErr)throw updExErr
+      invoice=upd
+    }else{
+      const{data:ins,error:insErr}=await supabase.from("invoices").insert({week_start:rangeStart,week_end:rangeEnd,total_rides:trips.length,total_riders:totalRiders,total_amount:totalAmt}).select().single()
+      if(insErr)throw insErr
+      invoice=ins
+    }
+    const invoiceDoc=await buildInvoice(trips,settings,rangeStart,rangeEnd,invoice.invoice_number)
     const iBytes=await invoiceDoc.save()
     const iPath=`weekly/invoice-${rangeStart}-${ts}.pdf`
-    const iUp=await supabase.storage.from("pdfs").upload(iPath,iBytes,{contentType:"application/pdf"})
+    const iUp=await supabase.storage.from("pdfs").upload(iPath,iBytes,{contentType:"application/pdf",upsert:true})
     if(iUp.error)throw iUp.error
     const{data:iUrl}=supabase.storage.from("pdfs").getPublicUrl(iPath)
-    const{error:updErr}=await supabase.from("invoices").update({pdf_url:iUrl.publicUrl}).eq("id",invoice.id)
-    if(updErr)throw updErr
 
-    const reportDoc=await buildReport(trips,settings,sigCache,rangeStart,rangeEnd,"Weekly Driver Report")
+    const reportDoc=await buildReport(trips,settings,rangeStart,rangeEnd,"Weekly Driver Report")
     const rBytes=await reportDoc.save()
     const rPath=`reports/report-${rangeStart}-${ts}.pdf`
     const rUp=await supabase.storage.from("pdfs").upload(rPath,rBytes,{contentType:"application/pdf"})
     if(rUp.error)throw rUp.error
     const{data:rUrl}=supabase.storage.from("pdfs").getPublicUrl(rPath)
+
+    const{error:updErr}=await supabase.from("invoices").update({pdf_url:iUrl.publicUrl,report_url:rUrl.publicUrl}).eq("id",invoice.id)
+    if(updErr)throw updErr
     return new Response(JSON.stringify({invoice_id:invoice.id,invoice_number:invoice.invoice_number,invoice_url:iUrl.publicUrl,report_url:rUrl.publicUrl,total_rides:trips.length,total_amount:totalAmt}),{headers:{...cors,"Content-Type":"application/json"}})
   }catch(e:any){
     console.error(e)

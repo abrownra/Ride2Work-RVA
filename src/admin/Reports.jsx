@@ -85,6 +85,8 @@ export default function Reports() {
           body: JSON.stringify({
             date_start:   dateStart,
             date_end:     dateEnd,
+            range_start:  (() => { const d = new Date(dateStart + 'T00:00:00'); return d.toISOString() })(),
+            range_end:    (() => { const d = new Date(dateEnd + 'T00:00:00'); d.setHours(23,59,59,999); return d.toISOString() })(),
             report_only:  true,
             report_title: reportTitle,
           }),

@@ -105,6 +105,13 @@ Deno.serve(async (req: Request) => {
         const pdfB64 = toB64(await pdfRes.arrayBuffer())
         attachments.push({ filename: `invoice-${weekStart}.pdf`, content: pdfB64 })
       }
+      if (invoiceRow.report_url) {
+        const reportRes = await fetch(invoiceRow.report_url)
+        if (reportRes.ok) {
+          const reportB64 = toB64(await reportRes.arrayBuffer())
+          attachments.push({ filename: `report-${weekStart}.pdf`, content: reportB64 })
+        }
+      }
       summaryHtml = `
         <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin-bottom:20px">
           <p style="margin:0 0 6px;color:#0369a1"><strong>Total Trips:</strong> ${invoiceRow.total_rides ?? "—"}</p>
