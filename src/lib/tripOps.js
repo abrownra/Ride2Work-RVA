@@ -100,16 +100,12 @@ export async function completeTrip(tripId, updateData, sigBase64, sigFileName) {
     if (upErr) return { data: null, error: upErr, offline: false }
     const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(sigFileName)
 
-    // Apply differential surcharge if module is active
+    // Apply differential driver bonus if module is active
+    // rate_differential is extra driver pay only — does NOT affect trip_total (invoice amount)
     const tripTimestamp = updateData.start_timestamp || new Date().toISOString()
     const differential = await calcDifferential(tripTimestamp)
     if (differential > 0) {
-      const riderCount = updateData.rider_count || 1
-      updateData = {
-        ...updateData,
-        rate_differential: differential,
-        trip_total: (Number(updateData.rate_applied) + differential) * riderCount,
-      }
+      updateData = { ...updateData, rate_differential: differential }
     }
 
     const { data, error } = await supabase

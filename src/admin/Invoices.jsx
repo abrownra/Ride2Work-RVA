@@ -51,14 +51,11 @@ export default function Invoices() {
       const startDt = new Date(weekStart + 'T00:00:00')
       const endDt = new Date(weekEnd + 'T00:00:00')
       endDt.setHours(23, 59, 59, 999)
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-invoice`,
-        {
+      const res = await fetch('/api/generate-invoice', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
             week_start: weekStart,
@@ -168,17 +165,19 @@ export default function Invoices() {
                     </td>
                     <td>
                       {inv.pdf_url ? (
-                        <a href={inv.pdf_url} target="_blank" rel="noreferrer" className="a-btn a-btn-ghost a-btn-sm">
-                          Invoice
+                        <a href={inv.pdf_url} target="_blank" rel="noreferrer" className="a-btn a-btn-primary a-btn-sm">
+                          ↓ Invoice
                         </a>
                       ) : '—'}
                     </td>
                     <td>
                       {inv.report_url ? (
-                        <a href={inv.report_url} target="_blank" rel="noreferrer" className="a-btn a-btn-ghost a-btn-sm">
-                          Report
+                        <a href={inv.report_url} target="_blank" rel="noreferrer" className="a-btn a-btn-primary a-btn-sm">
+                          ↓ Report
                         </a>
-                      ) : '—'}
+                      ) : (
+                        <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>Regenerate</span>
+                      )}
                     </td>
                   </tr>
                 ))}

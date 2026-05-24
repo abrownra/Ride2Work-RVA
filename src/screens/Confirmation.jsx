@@ -19,7 +19,8 @@ export default function Confirmation({ trip, driver, onNewTrip }) {
         const base = s.rate_driver_pay ?? 14
         const additional = s.rate_driver_additional_rider ?? 0
         const riderCount = trip.rider_count ?? 1
-        setDriverPay(base + additional * (riderCount - 1))
+        const differential = FEATURES.differential ? (Number(trip.rate_differential) || 0) : 0
+        setDriverPay(base + additional * (riderCount - 1) + differential)
       })
   }, [])
 

@@ -73,14 +73,11 @@ export default function Reports() {
     setResult(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-invoice`,
-        {
+      const res = await fetch('/api/generate-invoice', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
             date_start:   dateStart,
@@ -92,11 +89,13 @@ export default function Reports() {
           }),
         }
       )
-      const data = await res.json()
-      if (!res.ok || data.error) { setError(data.error || 'Generation failed'); return }
-      // Download PDF directly from the stored URL
-      const pdfRes = await fetch(data.report_url)
-      const blob = await pdfRes.blob()
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Generation failed')
+        return
+      }
+      // API returns PDF bytes directly
+      const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

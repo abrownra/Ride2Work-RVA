@@ -12,7 +12,7 @@ export const FEATURES = {
   liveBoard:    false,  // Master Key Module       — real-time active trips board (admin)
   leaderboard:  false,  // Master Key Module       — driver rankings on trip completion
   offlineMode:  true,   // Master Key Module       — offline trip queuing + auto-sync
-  differential: false,  // Differential Module     — time/day-based surcharge pricing
+  differential: true,   // Differential Module     — time/day-based surcharge pricing
 }
 
 /**

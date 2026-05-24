@@ -492,16 +492,6 @@ export default function Settings() {
                   ))}
                 </div>
               </div>
-              <div className="a-field" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <input
-                  type="checkbox"
-                  id="diff-active"
-                  checked={diffForm.active}
-                  onChange={(e) => setDiffForm({ ...diffForm, active: e.target.checked })}
-                  style={{ width: 16, height: 16 }}
-                />
-                <label htmlFor="diff-active" style={{ margin: 0, fontWeight: 500 }}>Active</label>
-              </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   className="a-btn a-btn-primary"
@@ -554,6 +544,15 @@ export default function Settings() {
                           : <span className="a-badge a-badge-gray">Inactive</span>}
                       </td>
                       <td style={{ padding: '9px 8px', display: 'flex', gap: 6 }}>
+                        <button
+                          className="a-btn a-btn-ghost a-btn-sm"
+                          onClick={async () => {
+                            await supabase.from('differential_rules').update({ active: !rule.active }).eq('id', rule.id)
+                            setDiffRules((prev) => prev.map((r) => r.id === rule.id ? { ...r, active: !r.active } : r))
+                          }}
+                        >
+                          {rule.active ? 'Deactivate' : 'Activate'}
+                        </button>
                         <button
                           className="a-btn a-btn-ghost a-btn-sm"
                           onClick={() => setDiffForm({ ...rule, days: rule.days || [] })}
