@@ -28,6 +28,8 @@ import RidePool from './admin/RidePool'
 import './admin/admin.css'
 
 import { useState } from 'react'
+import OfflineBanner from './screens/OfflineBanner'
+import { FEATURES } from './lib/features'
 
 const SCREENS = {
   SELECT_DRIVER: 'SELECT_DRIVER',
@@ -125,6 +127,7 @@ function AdminGuard({ children }) {
 export default function App() {
   return (
     <AuthProvider>
+      {FEATURES.offlineMode && <OfflineBanner />}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<DriverApp />} />
