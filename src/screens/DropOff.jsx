@@ -55,8 +55,7 @@ export default function DropOff({ trip, driver, onNext, onBack }) {
     const miles   = odoEnd - trip.odometer_start
     const threshold    = settings.long_distance_threshold_miles ?? 20
     const rate         = miles > threshold ? (settings.rate_long_distance ?? 21.0) : (settings.rate_standard ?? 17.66)
-    const additionalRate = settings.rate_additional_rider ?? 0
-    const tripTotal    = rate + (additionalRate * (riderCount - 1))
+    const tripTotal    = rate * riderCount
 
     const sigDataUrl  = sigRef.current.toDataURL('image/png')
     const sigBase64   = sigDataUrl.split(',')[1]

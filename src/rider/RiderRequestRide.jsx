@@ -9,15 +9,73 @@ function toMinLocalDatetime() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+function AddressField({ label, value, onChange, homeAddress, workAddress }) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      {(homeAddress || workAddress) && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          {homeAddress && (
+            <button
+              type="button"
+              onClick={() => onChange(homeAddress)}
+              style={{
+                padding: '5px 12px',
+                borderRadius: 8,
+                border: '1.5px solid',
+                borderColor: value === homeAddress ? '#111' : '#d1d5db',
+                background: value === homeAddress ? '#111' : '#fff',
+                color: value === homeAddress ? '#fff' : '#374151',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              🏠 Home
+            </button>
+          )}
+          {workAddress && (
+            <button
+              type="button"
+              onClick={() => onChange(workAddress)}
+              style={{
+                padding: '5px 12px',
+                borderRadius: 8,
+                border: '1.5px solid',
+                borderColor: value === workAddress ? '#111' : '#d1d5db',
+                background: value === workAddress ? '#111' : '#fff',
+                color: value === workAddress ? '#fff' : '#374151',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              🏢 Work
+            </button>
+          )}
+        </div>
+      )}
+      <input
+        type="text"
+        placeholder="Or type a custom address"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  )
+}
+
 export default function RiderRequestRide({ rider, onSuccess, onBack }) {
   const minDt = toMinLocalDatetime()
+  const homeAddress = rider.home_address || ''
+  const workAddress = rider.work_address || ''
 
-  const [pickupTime, setPickupTime]       = useState('')
-  const [pickupAddress, setPickupAddress] = useState(rider.home_address || '')
-  const [dropoffAddress, setDropoffAddress] = useState(rider.work_address || '')
-  const [notes, setNotes]                 = useState('')
-  const [error, setError]                 = useState(null)
-  const [submitting, setSubmitting]       = useState(false)
+  const [pickupTime,     setPickupTime]     = useState('')
+  const [pickupAddress,  setPickupAddress]  = useState(homeAddress)
+  const [dropoffAddress, setDropoffAddress] = useState(workAddress)
+  const [notes,          setNotes]          = useState('')
+  const [error,          setError]          = useState(null)
+  const [submitting,     setSubmitting]     = useState(false)
 
   async function handleSubmit() {
     setError(null)
@@ -35,7 +93,6 @@ export default function RiderRequestRide({ rider, onSuccess, onBack }) {
 
     setSubmitting(true)
 
-    // Geocode both addresses (best effort — don't block on failure)
     const [pickupGeo, dropoffGeo] = await Promise.all([
       forwardGeocode(pickupAddress),
       forwardGeocode(dropoffAddress),
@@ -66,7 +123,6 @@ export default function RiderRequestRide({ rider, onSuccess, onBack }) {
       return
     }
 
-    // Notify drivers via edge function (fire and forget)
     supabase.functions.invoke('notify-drivers', {
       body: { ride_request_id: data.id },
     }).catch(() => {})
@@ -93,25 +149,21 @@ export default function RiderRequestRide({ rider, onSuccess, onBack }) {
           />
         </div>
 
-        <div className="field">
-          <label>Pickup Address</label>
-          <input
-            type="text"
-            placeholder="Where should the driver pick you up?"
-            value={pickupAddress}
-            onChange={(e) => setPickupAddress(e.target.value)}
-          />
-        </div>
+        <AddressField
+          label="Pickup Address"
+          value={pickupAddress}
+          onChange={setPickupAddress}
+          homeAddress={homeAddress}
+          workAddress={workAddress}
+        />
 
-        <div className="field">
-          <label>Drop-off Address</label>
-          <input
-            type="text"
-            placeholder="Where are you going?"
-            value={dropoffAddress}
-            onChange={(e) => setDropoffAddress(e.target.value)}
-          />
-        </div>
+        <AddressField
+          label="Drop-off Address"
+          value={dropoffAddress}
+          onChange={setDropoffAddress}
+          homeAddress={homeAddress}
+          workAddress={workAddress}
+        />
 
         <div className="field">
           <label>Notes (optional)</label>

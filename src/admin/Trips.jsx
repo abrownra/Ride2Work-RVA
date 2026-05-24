@@ -104,7 +104,7 @@ export default function Trips() {
       const diff  = parseFloat(field === 'rate_differential' ? value : prev.rate_differential) || 0
       const count = parseInt(field === 'rider_count'         ? value : prev.rider_count)
       if (!isNaN(rate) && !isNaN(count) && count > 0) {
-        next.trip_total = ((rate + diff) * count).toFixed(2)
+        next.trip_total = (rate * count).toFixed(2)
       }
       return next
     })
